@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const childProcess = require('child_process');
-const tools = require('../tools.js');
+const helpers = require('../helpers.js');
 
 exports.command = 'zip <path>';
 exports.desc = 'Find .pas source files and zip it along with a top-level .pdf document.\n'
@@ -31,7 +31,7 @@ exports.handler = async function (argv) {
     fs.mkdirSync(workingDirectory, {recursive: true});
 
     // Copy all required files to new working directory
-    const listOfSourceFiles = tools.findPascalFiles([userPath]).map(file => {
+    const listOfSourceFiles = helpers.findPascalFiles([userPath]).map(file => {
         const sourceFilePath = path.join(workingDirectory, path.basename(file));
 
         fs.copyFileSync(file, sourceFilePath);
@@ -40,7 +40,7 @@ exports.handler = async function (argv) {
     });
 
     // Copy documentation
-    const pdfDocument = tools.readByLineEnding(userPath, 'pdf')
+    const pdfDocument = helpers.readByLineEnding(userPath, 'pdf')
         .find(it => pdfNamingPattern.test(path.basename(it)));
 
     fs.copyFileSync(pdfDocument, path.join(workingDirectory, path.basename(pdfDocument)));

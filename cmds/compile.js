@@ -1,6 +1,6 @@
 const fs = require('fs');
 const childProcess = require('child_process');
-const tools = require('../tools.js');
+const helpers = require('../helpers.js');
 const rxjs = require('rxjs');
 const operators = require('rxjs/operators');
 
@@ -28,7 +28,7 @@ exports.handler = async function (argv) {
     };
 
     new rxjs.Observable(subscriber => {
-        tools.findPascalFiles(argv.paths)
+        helpers.findPascalFiles(argv.paths)
             .forEach(async file => {
                 subscriber.next([file]);
 

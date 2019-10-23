@@ -4,16 +4,17 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "release": "pkg --target latest-macos-x64,latest-win-x64 --out-path releases ."
   },
   "keywords": [],
-  "author": "",
+  "author": "Dominik Bauernfeind",
   "license": "ISC",
   "dependencies": {
     "rxjs": "^6.5.3",
     "yargs": "^14.2.0"
   },
-  "bin": "main.js",
+  "bin": "index.js",
   "pkg": {
     "scripts": "cmds/**/*"
   }

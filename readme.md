@@ -35,12 +35,15 @@ $ pascal-tools-win.exe format my-task-1 -w
 
 To see available commands use `--help`.
 
-````sh
+````
 pascal-tools/releases on  master [✘!?] 
 ➜ ./pascal-tools-macos --help
 pascal-tools-macos <command>
 
 Commands:
+  pascal-tools-macos auto-run <file>    Compile & run the file.
+                                        Automatically restarts after finishing
+                                        or changes to the source file.
   pascal-tools-macos compile [paths..]  Compile all files in the given paths
                                         recursively
   pascal-tools-macos format [paths..]   Format all .pas source files according
@@ -57,4 +60,5 @@ Commands:
 Options:
   --version  Show version number                                       [boolean]
   --help     Show help                                                 [boolean]
+
 ````

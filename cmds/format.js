@@ -1,4 +1,4 @@
-const tools = require('../tools.js');
+const helpers = require('../helpers.js');
 const fs = require('fs');
 const path = require('path');
 const rxjs = require('rxjs');
@@ -93,7 +93,7 @@ exports.handler = function (argv) {
     }
 
     new rxjs.Observable(subscriber => {
-        tools.findPascalFiles(argv.paths)
+        helpers.findPascalFiles(argv.paths)
             .forEach(file => {
                 // Initial format
                 subscriber.next([file]);
