@@ -27,7 +27,9 @@ exports.handler = async function (argv) {
     const pdfNamingPattern = new RegExp(/^G\d_Ue\d\d_\w+_\w+\.pdf/, 'ui');
 
     // Create new directory to work with
-    childProcess.execSync(`rm -r ${workingDirectory}`)
+    if(fs.existsSync(workingDirectory)) {
+        childProcess.execSync(`rm -r ${workingDirectory}`)
+    }
     fs.mkdirSync(workingDirectory, {recursive: true});
 
     // Copy all required files to new working directory

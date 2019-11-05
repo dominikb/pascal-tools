@@ -1,4 +1,5 @@
 const fs = require('fs');
+const path = require('path');
 const childProcess = require('child_process');
 const helpers = require('../helpers.js');
 const rxjs = require('rxjs');
@@ -21,10 +22,17 @@ exports.builder = (yargs) => {
 };
 exports.handler = async function (argv) {
     const compile = (file) => {
-            const stdout = childProcess.execSync(`fpc ${file}`, {encoding: 'utf8'});
+        try {
+            const stdout = childProcess.execSync(`fpc ${file}`, {
+                encoding: 'utf8',
+                cwd: path.dirname(file),
+            });
             console.log(new Date().toISOString());
             console.log('------------------------');
             console.log(stdout);
+        } catch(e) {
+            console.log(e.stdout);
+        }
     };
 
     new rxjs.Observable(subscriber => {

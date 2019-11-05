@@ -3,62 +3,8 @@ const fs = require('fs');
 const path = require('path');
 const rxjs = require('rxjs');
 const operators = require('rxjs/operators');
-
-const keywords = [
-    'AND',
-    'ARRAY',
-    'ASM',
-    'BEGIN',
-    'CASE',
-    'CONST',
-    'CONSTRUCTOR',
-    'DESTRUCTOR',
-    'DIV',
-    'DO',
-    'DOWNTO',
-    'ELSE',
-    'END',
-    'EXPORTS',
-    'FILE',
-    'FOR',
-    'FUNCTION',
-    'GOTO',
-    'IF',
-    'IMPLEMENTATION',
-    'IN',
-    'INHERITED',
-    'INLINE',
-    'INTEGER',
-    'INTERFACE',
-    'LABEL',
-    'LIBRARY',
-    'MOD',
-    'NIL',
-    'NOT',
-    'OBJECT',
-    'OF',
-    'OR',
-    'PACKED',
-    'PROCEDURE',
-    'PROGRAM',
-    'REAL',
-    'RECORD',
-    'REPEAT',
-    'SET',
-    'SHL',
-    'SHR',
-    'STRING',
-    'THEN',
-    'TO',
-    'TYPE',
-    'UNIT',
-    'UNTIL',
-    'USES',
-    'VAR',
-    'WHILE',
-    'WITH',
-    'XOR',
-];
+const childProcess = require('child_process');
+const ptopConfig = require('./../ptop-config.js');
 
 exports.command = 'format [paths..]';
 exports.desc = 'Format all .pas source files according to style guidelines.';
@@ -77,12 +23,23 @@ exports.builder = (yargs) => {
 };
 exports.handler = function (argv) {
     const format = (file) => {
+        fs.writeFileSync('.ptop.config', ptopConfig);
+        childProcess.execSync(`ptop -i 2 -c .ptop.config ${file} ${file}`);
+        fs.unlinkSync('.ptop.config');
+
         let content = fs.readFileSync(file, { encoding: 'utf8' });
 
-        content = keywords.reduce((content, keyword) => {
-            const regex = new RegExp('\\b' + keyword + '\\b', 'gim');
-            return content.replace(regex, keyword.toUpperCase());
-        }, content);
+        // Remove multiple newlines with indentations
+        content = content.replace(/\n(?:\s*\n){2,}( +)/g, '\n\n$1');
+
+        // Remove multiple newlines
+        content = content.replace(/\n{3,}/g, '\n\n');
+
+        // Same indentation level for comments
+        content = content.replace(/(?: )*\(\*([\s\w.:!?"'\-=><]*)(\n\s+)\*\)/, '$2(*$1$2*)');
+
+        // Put FORWARD on declaration line of PROCEDURE and FUNCTION
+        content = content.replace(/\nFORWARD;/g, ' FORWARD;');
 
         fs.writeFileSync(file, content);
     };
