@@ -3,68 +3,17 @@ const fs = require('fs');
 const path = require('path');
 const rxjs = require('rxjs');
 const operators = require('rxjs/operators');
-
-const keywords = [
-    'AND',
-    'ARRAY',
-    'ASM',
-    'BEGIN',
-    'CASE',
-    'CONST',
-    'CONSTRUCTOR',
-    'DESTRUCTOR',
-    'DIV',
-    'DO',
-    'DOWNTO',
-    'ELSE',
-    'END',
-    'EXPORTS',
-    'FILE',
-    'FOR',
-    'FUNCTION',
-    'GOTO',
-    'IF',
-    'IMPLEMENTATION',
-    'IN',
-    'INHERITED',
-    'INLINE',
-    'INTEGER',
-    'INTERFACE',
-    'LABEL',
-    'LIBRARY',
-    'MOD',
-    'NIL',
-    'NOT',
-    'OBJECT',
-    'OF',
-    'OR',
-    'PACKED',
-    'PROCEDURE',
-    'PROGRAM',
-    'REAL',
-    'RECORD',
-    'REPEAT',
-    'SET',
-    'SHL',
-    'SHR',
-    'STRING',
-    'THEN',
-    'TO',
-    'TYPE',
-    'UNIT',
-    'UNTIL',
-    'USES',
-    'VAR',
-    'WHILE',
-    'WITH',
-    'XOR',
-];
+const childProcess = require('child_process');
+const ptopConfig = require('./../ptop-config.js');
 
 exports.command = 'format [paths..]';
 exports.desc = 'Format all .pas source files according to style guidelines.';
 exports.builder = (yargs) => {
     yargs.positional('paths', {
-        describe: 'List of paths that includes source files recursively.\nActions are applied to all files.\nDefaults to the current working directory.',
+        describe: `File or directory where Pascal source files can be found.
+        If a directory is given, Pascal source files will be found recursively.
+        
+        Defaults to the current working directory.`,
         default: '.',
         demand: false,
     });
@@ -77,12 +26,23 @@ exports.builder = (yargs) => {
 };
 exports.handler = function (argv) {
     const format = (file) => {
+        fs.writeFileSync('.ptop.config', ptopConfig);
+        childProcess.execSync(`ptop -i 2 -c .ptop.config ${file} ${file}`);
+        fs.unlinkSync('.ptop.config');
+
         let content = fs.readFileSync(file, { encoding: 'utf8' });
 
-        content = keywords.reduce((content, keyword) => {
-            const regex = new RegExp('\\b' + keyword + '\\b', 'gim');
-            return content.replace(regex, keyword.toUpperCase());
-        }, content);
+        // Remove multiple newlines
+        content = content.replace(/\n{3,}/g, '\n\n');
+
+        // Same indentation level for comments
+        content = content.replace(/(?: )*\(\*([\s\w.:!?"'\-=><]*)(\n\s+)\*\)/, '$2(*$1$2*)');
+
+        // Put FORWARD on declaration line of PROCEDURE and FUNCTION
+        content = content.replace(/\nFORWARD;/g, ' FORWARD;');
+
+        // Avoid newline after variable and constant declaration
+        content = content.replace(/(VAR|CONST)\s*\n+(\s+)/gm, '$1\n$2');
 
         fs.writeFileSync(file, content);
     };
@@ -93,12 +53,14 @@ exports.handler = function (argv) {
     }
 
     new rxjs.Observable(subscriber => {
+        console.log(argv.paths);
         helpers.findPascalFiles(argv.paths)
             .forEach(file => {
+                console.log(file);
                 // Initial format
                 subscriber.next([file]);
-
-                const watcher = fs.watch(file, (_eventType, _fileName) => subscriber.next([file]));
+                
+                const watcher = fs.watch(file, (_eventType, _fileName) => console.log(_eventType, _fileName) || subscriber.next([file]));
 
                 watcher.on('error', e => subscriber.error(e));
                 watcher.on('close', () => subscriber.complete());
@@ -114,7 +76,7 @@ exports.handler = function (argv) {
             operators.throttleTime(100)
         ))
     ).subscribe({
-        next([filePath]) { doFormat(filePath) },
+        next([filePath]) { console.log(filePath) || doFormat(filePath) },
         error(err) { console.error(err) || process.exit(1) },
         complete() { console.log('Formatting done!') || process.exit(0); }
     });
