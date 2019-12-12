@@ -23,7 +23,8 @@ exports.builder = (yargs) => {
 exports.handler = async function (argv) {
     const compile = (file) => {
         try {
-            const stdout = childProcess.execSync(`fpc ${file}`, {
+            const command = `fpc -Mtp -Criot -gl -gh ${file}`;
+            const stdout = childProcess.execSync(command, {
                 encoding: 'utf8',
                 cwd: path.dirname(file),
             });

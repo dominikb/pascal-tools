@@ -76,9 +76,6 @@ exports.handler = async function (argv) {
         await run(compiledFilePath);
 
         console.log('---------------------\n');
-
-        // Loop when finished
-        compileAndRun();
     };
 
     // Initial Run

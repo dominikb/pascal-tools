@@ -39,10 +39,23 @@ exports.handler = function (argv) {
         content = content.replace(/(?: )*\(\*([\s\w.:!?"'\-=><]*)(\n\s+)\*\)/, '$2(*$1$2*)');
 
         // Put FORWARD on declaration line of PROCEDURE and FUNCTION
-        content = content.replace(/\nFORWARD;/g, ' FORWARD;');
+        content = content.replace(/\nFORWARD;/gi, ' FORWARD;');
 
         // Avoid newline after variable and constant declaration
         content = content.replace(/(VAR|CONST)\s*\n+(\s+)/gm, '$1\n$2');
+
+        // Format WriteLn and ReadLn statements
+        content = content.replace(/writeln\(/gi, 'WriteLn(');
+        content = content.replace(/readln\(/gi, 'ReadLn(');
+        
+        // Format Datatypes
+        content = content.replace(/\W(integer|string|boolean|byte|char)\W/gi, match => match.toUpperCase());
+
+        // Inline BEGIN with previous statement
+        content = content.replace(/\n +(BEGIN)/gm, ' BEGIN');
+
+        // Avoid newlines at the beginning of the file
+        content = content.replace(/^\n+/g, '');
 
         fs.writeFileSync(file, content);
     };
@@ -53,10 +66,8 @@ exports.handler = function (argv) {
     }
 
     new rxjs.Observable(subscriber => {
-        console.log(argv.paths);
         helpers.findPascalFiles(argv.paths)
             .forEach(file => {
-                console.log(file);
                 // Initial format
                 subscriber.next([file]);
                 
@@ -76,7 +87,7 @@ exports.handler = function (argv) {
             operators.throttleTime(100)
         ))
     ).subscribe({
-        next([filePath]) { console.log(filePath) || doFormat(filePath) },
+        next([filePath]) { doFormat(filePath) },
         error(err) { console.error(err) || process.exit(1) },
         complete() { console.log('Formatting done!') || process.exit(0); }
     });
